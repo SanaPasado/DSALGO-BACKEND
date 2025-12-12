@@ -1,6 +1,8 @@
 from django.http import JsonResponse
 from django.shortcuts import render
+from backend.base.serializers import ProductSerializer
 from rest_framework.decorators import api_view
+from backend.base.models import Product
 from rest_framework.response import Response
 from base import products
 
@@ -17,14 +19,19 @@ def get_routes(request):
 
 @api_view(['GET'])
 def get_products(request):
-    return Response(products)
+    products = Product.objects.all()
+    serializer = ProductSerializer(products, many=True)
+
+    return Response(serializer.data)
 
 @api_view(['GET'])
 def get_product(request, pk):
-    product = None
-    for item in products:
-        if item['_id'] == pk:
-            product = item
-            break
+    product = Product.objects.filter(_id=pk).first()
+    # need ung .first() to get first instance of object query set
+    if product is None:
+        return Response({'detail': 'Product not found'}, status=404)
 
-    return Response(product)    
+
+    serializer = ProductSerializer(product, many=False)
+
+    return Response(serializer.data)    
